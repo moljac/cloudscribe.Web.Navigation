@@ -21,7 +21,6 @@ namespace cloudscribe.Web.Navigation
             IEnumerable<INavigationNodePermissionResolver> permissionResolvers,
             IEnumerable<IFindCurrentNode> nodeFinders,
             IUrlHelperFactory urlHelperFactory,
-            IActionContextAccessor actionContextAccesor,
             INodeUrlPrefixProvider prefixProvider,
             ILogger<NavigationViewComponent> logger)
         {
@@ -29,7 +28,6 @@ namespace cloudscribe.Web.Navigation
             _permissionResolvers = permissionResolvers;
             _nodeFinders = nodeFinders;
             _urlHelperFactory = urlHelperFactory;
-            _actionContextAccesor = actionContextAccesor;
             _prefixProvider = prefixProvider;
             
             _log = logger;
@@ -40,15 +38,19 @@ namespace cloudscribe.Web.Navigation
         private IEnumerable<INavigationNodePermissionResolver> _permissionResolvers;
         private IEnumerable<IFindCurrentNode> _nodeFinders;
         private IUrlHelperFactory _urlHelperFactory;
-        private IActionContextAccessor _actionContextAccesor;
         private INodeUrlPrefixProvider _prefixProvider;
 
         
 
         public async Task<IViewComponentResult> InvokeAsync(string viewName, string filterName, string startingNodeKey)
         {
+            if (NavigationSuppressor.IsFilterSuppressed(Request.HttpContext, filterName))
+            {
+                return Content(string.Empty);
+            }
+
             var rootNode = await _builder.GetTree();
-            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccesor.ActionContext);
+            var urlHelper = _urlHelperFactory.GetUrlHelper(ViewContext);
             NavigationViewModel model = new NavigationViewModel(
                 startingNodeKey,
                 filterName,

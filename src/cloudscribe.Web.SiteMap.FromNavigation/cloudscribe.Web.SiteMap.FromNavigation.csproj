@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <Description>cloudscribe.Web.SiteMap.FromNavigation a library that implements ISiteMapNodeService using existing tree of nodes from cloudscribe.Web.Navigation.NavigationTreeBuilderService</Description>
-    <Version>8.0.0</Version>
-    <TargetFramework>net8.0</TargetFramework>
+    <Version>10.0.0</Version>
+    <TargetFramework>net10.0</TargetFramework>
     <Authors>Joe Audette</Authors>
     <PackageTags>cloudscribe;mvc;sitemap</PackageTags>
     <PackageIcon>icon.png</PackageIcon>
@@ -13,7 +13,12 @@
     <RepositoryType>git</RepositoryType>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

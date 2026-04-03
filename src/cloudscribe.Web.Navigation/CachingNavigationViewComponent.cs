@@ -22,7 +22,6 @@ namespace cloudscribe.Web.Navigation
             IEnumerable<INavigationNodePermissionResolver> permissionResolvers,
             IEnumerable<IFindCurrentNode> nodeFinders,
             IUrlHelperFactory urlHelperFactory,
-            IActionContextAccessor actionContextAccesor,
             INodeUrlPrefixProvider prefixProvider,
             ILogger<NavigationViewComponent> logger,
             IDOMTreeCache DomCache,
@@ -34,7 +33,6 @@ namespace cloudscribe.Web.Navigation
             _permissionResolvers  = permissionResolvers;
             _nodeFinders          = nodeFinders;
             _urlHelperFactory     = urlHelperFactory;
-            _actionContextAccesor = actionContextAccesor;
             _prefixProvider       = prefixProvider;
             _log                  = logger;
             _domCache             = DomCache;
@@ -52,7 +50,6 @@ namespace cloudscribe.Web.Navigation
         private IEnumerable<INavigationNodePermissionResolver> _permissionResolvers;
         private IEnumerable<IFindCurrentNode>                  _nodeFinders;
         private IUrlHelperFactory                              _urlHelperFactory;
-        private IActionContextAccessor                         _actionContextAccesor;
         private INodeUrlPrefixProvider                         _prefixProvider;
 
 
@@ -64,12 +61,17 @@ namespace cloudscribe.Web.Navigation
         // In a simplecontent system I'd probably need to use the IHandlePageCreated (etc) 
         // hooks to clear a navcache of known name.
 
-        public async Task<IViewComponentResult> InvokeAsync(string viewName, 
-                                                            string filterName, 
-                                                            string startingNodeKey, 
+        public async Task<IViewComponentResult> InvokeAsync(string viewName,
+                                                            string filterName,
+                                                            string startingNodeKey,
                                                             int    expirationSeconds = 60,
                                                             bool   testMode = false)
         {
+            if (NavigationSuppressor.IsFilterSuppressed(Request.HttpContext, filterName))
+            {
+                return Content(string.Empty);
+            }
+
             NavigationViewModel model = null;
 
             string cacheKey = $"{viewName}_{filterName}_{startingNodeKey}";
@@ -96,7 +98,7 @@ namespace cloudscribe.Web.Navigation
                     model = await CreateNavigationTree(filterName, startingNodeKey);
 
                     ViewEngineResult viewResult = null;
-                    var actionContext           = _actionContextAccesor.ActionContext;
+                    var actionContext           = ViewContext;
                     var tempData                = new TempDataDictionary(actionContext.HttpContext, _tempDataProvider);
 
                     string fullViewName = $"Components/CachingNavigation/{viewName}";
@@ -156,7 +158,7 @@ namespace cloudscribe.Web.Navigation
         private async Task<NavigationViewModel> CreateNavigationTree(string filterName, string startingNodeKey)
         {
             var rootNode  = await _builder.GetTree();
-            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccesor.ActionContext);
+            var urlHelper = _urlHelperFactory.GetUrlHelper(ViewContext);
             NavigationViewModel model = new NavigationViewModel(
                 startingNodeKey,
                 filterName,
